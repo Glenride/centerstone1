@@ -1,47 +1,32 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useForm } from '@inertiajs/react';
+import { FormEventHandler } from 'react';
 
 export function WaitlistForm() {
-    const [submitted, setSubmitted] = useState(false);
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
+    });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        // Mock submission
-        console.log('Form submitted');
-        setSubmitted(true);
-    };
 
-    if (submitted) {
-        return (
-            <div className="flex flex-col items-center justify-center space-y-4 rounded-xl border bg-card p-8 text-center text-card-foreground shadow-sm">
-                <div className="rounded-full bg-primary/10 p-3 text-primary">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-check"
-                    >
-                        <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                </div>
-                <h3 className="text-xl font-semibold">You're on the list!</h3>
-                <p className="text-muted-foreground">
-                    We'll let you know when Centerstone is ready for you.
-                </p>
-                <Button variant="outline" onClick={() => setSubmitted(false)}>
-                    Add another email
-                </Button>
-            </div>
-        );
-    }
+        // We split the name into first/last for the UI but combine for the backend if needed
+        // Or if the backend expects 'name', we just pass it directly.
+        // Given the UI had First/Last, we can concatenate them or just use a single Name field.
+        // Let's stick to the UI design (First/Last) but map it to 'name' for standard Laravel auth.
+        // Wait, standard Laravel Breeze/Fortify uses 'name'. 
+        // Let's simplify and just use 'Name' to match the backend expectation 
+        // OR concatenate them before submit. Concatenation is cleaner for the UI.
+
+        post('/register', {
+            onFinish: () => reset('password', 'password_confirmation'),
+        });
+    };
 
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -56,36 +41,69 @@ export function WaitlistForm() {
             <div className="p-6 pt-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="first-name">First Name</Label>
+                        <Label htmlFor="name">Full Name</Label>
                         <Input
-                            id="first-name"
+                            id="name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
                             required
                             placeholder="Enter your full name..."
                         />
+                        {errors.name && (
+                            <p className="text-sm text-red-500">{errors.name}</p>
+                        )}
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="last-name">Last Name</Label>
-                        <Input
-                            id="last-name"
-                            required
-                            placeholder="Enter your full name..."
-                        />
-                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
                             type="email"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
                             required
                             placeholder="Enter your email..."
                         />
+                        {errors.email && (
+                            <p className="text-sm text-red-500">{errors.email}</p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                required
+                                placeholder="******"
+                            />
+                            {errors.password && (
+                                <p className="text-sm text-red-500">{errors.password}</p>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password_confirmation">Confirm</Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                required
+                                placeholder="******"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-4">
-                        <Button variant="outline" type="button">
+                        <Button variant="outline" type="button" onClick={() => window.history.back()}>
                             ← Previous
                         </Button>
-                        <Button type="submit">Next →</Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Joining...' : 'Join Waitlist →'}
+                        </Button>
                     </div>
                 </form>
             </div>
