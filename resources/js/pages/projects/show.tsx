@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
-import { ChevronDown, Pencil, Check, X, Plus, ListHistory } from 'lucide-react';
+import { ChevronDown, Pencil, Check, X, Plus, History } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -66,7 +66,7 @@ export default function ProjectShow({ project, activities = [] }: { project: Pro
                         <Sheet>
                             <SheetTrigger asChild>
                                 <Button variant="outline" size="sm" className="gap-2">
-                                    <ListHistory className="h-4 w-4" />
+                                    <History className="h-4 w-4" />
                                     Activity
                                 </Button>
                             </SheetTrigger>
