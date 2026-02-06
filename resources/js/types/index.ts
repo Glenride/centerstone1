@@ -20,6 +20,7 @@ export type Phase = {
     status: string;
     duration?: string;
     priority?: 'low' | 'medium' | 'high';
+    notes?: string;
     tasks?: Task[];
 };
 
@@ -28,6 +29,7 @@ export type Task = {
     name: string;
     description: string;
     is_completed: boolean;
+    notes?: string;
     subtasks?: Subtask[];
 };
 
@@ -36,6 +38,7 @@ export type Subtask = {
     name: string;
     is_completed: boolean;
     order: number;
+    notes?: string;
 };
 
 export type SharedData = {

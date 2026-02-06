@@ -2,7 +2,7 @@ import { Head, usePage, useForm, Link } from '@inertiajs/react';
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import type { BreadcrumbItem, SharedData } from '@/types';
+import type { BreadcrumbItem, SharedData, Project } from '@/types';
 import { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,6 +33,7 @@ export default function Dashboard({ projects = [] }: { projects: Project[] }) {
     const { data, setData, post, processing, reset, errors } = useForm({
         title: '',
         description: '',
+        template: 'ip_commercialization',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -91,6 +99,31 @@ export default function Dashboard({ projects = [] }: { projects: Project[] }) {
                                                 value={data.description}
                                                 onChange={(e) => setData('description', e.target.value)}
                                             />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="template">Project Template</Label>
+                                            <Select
+                                                value={data.template}
+                                                onValueChange={(value) => setData('template', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a template" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="ip_commercialization">IP Commercialization</SelectItem>
+                                                    <SelectItem value="standard">Standard Project Management</SelectItem>
+                                                    <SelectItem value="agile">Agile Software Development</SelectItem>
+                                                    <SelectItem value="content">Content Creation Pipeline</SelectItem>
+                                                    <SelectItem value="blank">Blank Project</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {data.template === 'ip_commercialization' && "The standard Centerstone flow for patenting and commercializing IP."}
+                                                {data.template === 'standard' && "Classic 5-phase project management lifecycle."}
+                                                {data.template === 'agile' && "Iterative development flow for software projects."}
+                                                {data.template === 'content' && "Workflow for producing and publishing content."}
+                                                {data.template === 'blank' && "Start from scratch with no pre-defined phases."}
+                                            </p>
                                         </div>
                                         <div className="flex justify-end">
                                             <Button type="submit" disabled={processing}>

@@ -34,6 +34,10 @@ class SubtaskController extends Controller
             abort(403);
         }
 
+        if ($task->phase->project->status !== 'active') {
+            abort(403, 'Project is inactive.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -72,9 +76,14 @@ class SubtaskController extends Controller
             abort(403);
         }
 
+        if ($subtask->task->phase->project->status !== 'active') {
+            abort(403, 'Project is inactive.');
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'is_completed' => 'sometimes|boolean',
+            'notes' => 'nullable|string',
         ]);
 
         $subtask->update($validated);

@@ -35,13 +35,17 @@ class ProjectController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'template' => 'nullable|string',
         ]);
 
         $project = Project::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
             'description' => $request->description,
+            'status' => 'active',
         ]);
+
+        $project->createPhasesFromTemplate($request->template ?? 'ip_commercialization');
 
         return redirect()->route('dashboard')->with('success', 'Project created successfully!');
     }
@@ -76,7 +80,19 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        //
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'sometimes|string|in:active,inactive,completed',
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $project->update($validated);
+
+        return back();
     }
 
     /**

@@ -1,0 +1,44 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('phases', function (Blueprint $table) {
+            $table->text('notes')->nullable()->after('description');
+        });
+
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->renameColumn('user_notes', 'notes');
+        });
+
+        Schema::table('subtasks', function (Blueprint $table) {
+            $table->text('notes')->nullable()->after('name');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('phases', function (Blueprint $table) {
+            $table->dropColumn('notes');
+        });
+
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->renameColumn('notes', 'user_notes');
+        });
+
+        Schema::table('subtasks', function (Blueprint $table) {
+            $table->dropColumn('notes');
+        });
+    }
+};

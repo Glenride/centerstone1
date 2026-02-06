@@ -61,9 +61,14 @@ class PhaseController extends Controller
             abort(403);
         }
 
+        if ($phase->project->status !== 'active') {
+            abort(403, 'Project is inactive.');
+        }
+
         $validated = $request->validate([
             'duration' => 'nullable|string|max:255',
             'priority' => 'nullable|string|in:low,medium,high',
+            'notes' => 'nullable|string',
         ]);
 
         $phase->update($validated);

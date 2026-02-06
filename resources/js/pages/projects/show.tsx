@@ -11,7 +11,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import ClickableText from '@/components/clickable-text';
 import { cn } from '@/lib/utils';
 
@@ -36,15 +44,29 @@ export default function ProjectShow({ project }: { project: Project }) {
                         <h1 className="text-2xl font-bold tracking-tight">{project.title}</h1>
                         <p className="text-muted-foreground">{project.description}</p>
                     </div>
-                    <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
-                        {project.status}
-                    </Badge>
+                    <Select
+                        value={project.status}
+                        onValueChange={(value) => {
+                            router.patch(`/projects/${project.id}`, {
+                                status: value
+                            });
+                        }}
+                    >
+                        <SelectTrigger className="w-[140px] h-8 text-xs">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="grid gap-6">
                     <Accordion type="single" collapsible className="w-full" defaultValue={`phase-${project.phases?.[0]?.id}`}>
                         {project.phases?.map((phase) => (
-                            <PhaseItem key={phase.id} phase={phase} />
+                            <PhaseItem key={phase.id} phase={phase} isReadOnly={project.status !== 'active'} />
                         ))}
                     </Accordion>
                 </div>
@@ -53,7 +75,7 @@ export default function ProjectShow({ project }: { project: Project }) {
     );
 }
 
-function PhaseItem({ phase }: { phase: Phase }) {
+function PhaseItem({ phase, isReadOnly }: { phase: Phase, isReadOnly: boolean }) {
     const [duration, setDuration] = useState(phase.duration || '');
     const [isEditingDuration, setIsEditingDuration] = useState(false);
 
@@ -82,6 +104,7 @@ function PhaseItem({ phase }: { phase: Phase }) {
     };
 
     const handlePriorityClick = (e: React.MouseEvent) => {
+        if (isReadOnly) return;
         e.stopPropagation();
         const priorities: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high'];
         const currentIndex = priorities.indexOf(phase.priority || 'medium');
@@ -110,7 +133,7 @@ function PhaseItem({ phase }: { phase: Phase }) {
                         <span className="text-lg font-semibold">{phase.name}</span>
                         <div className="flex items-center gap-2 mt-1">
                             <Badge
-                                className={cn("cursor-pointer capitalize", getPriorityColor(phase.priority))}
+                                className={cn("capitalize", !isReadOnly && "cursor-pointer", getPriorityColor(phase.priority), isReadOnly && "opacity-80 pointer-events-none")}
                                 onClick={handlePriorityClick}
                             >
                                 {phase.priority || 'medium'}
@@ -132,7 +155,7 @@ function PhaseItem({ phase }: { phase: Phase }) {
 
                         <div className="flex flex-col items-end gap-1 min-w-[100px]">
                             <span className="text-xs text-muted-foreground">Duration</span>
-                            {isEditingDuration ? (
+                            {isEditingDuration && !isReadOnly ? (
                                 <div className="flex items-center gap-1">
                                     <Input
                                         value={duration}
@@ -154,11 +177,11 @@ function PhaseItem({ phase }: { phase: Phase }) {
                                 </div>
                             ) : (
                                 <div
-                                    className="text-sm font-medium cursor-pointer hover:underline flex items-center gap-1"
-                                    onClick={() => setIsEditingDuration(true)}
+                                    className={cn("text-sm font-medium flex items-center gap-1", !isReadOnly && "cursor-pointer hover:underline")}
+                                    onClick={() => !isReadOnly && setIsEditingDuration(true)}
                                 >
                                     {phase.duration || '24 hours'}
-                                    <Pencil className="h-3 w-3 text-muted-foreground opacity-50" />
+                                    {!isReadOnly && <Pencil className="h-3 w-3 text-muted-foreground opacity-50" />}
                                 </div>
                             )}
                         </div>
@@ -170,8 +193,19 @@ function PhaseItem({ phase }: { phase: Phase }) {
                     <ClickableText text={phase.description} className="text-muted-foreground mb-4 block" />
 
                     <div className="space-y-4">
+                        <div className="mb-4">
+                            <Label className="text-xs text-muted-foreground">Phase Notes</Label>
+                            <NotesSection
+                                initialNotes={phase.notes}
+                                isReadOnly={isReadOnly}
+                                onSave={(notes) => {
+                                    router.patch(`/phases/${phase.id}`, { notes }, { preserveScroll: true });
+                                }}
+                            />
+                        </div>
+
                         {phase.tasks?.map((task) => (
-                            <TaskItem key={task.id} task={task} />
+                            <TaskItem key={task.id} task={task} isReadOnly={isReadOnly} />
                         ))}
                     </div>
                 </div>
@@ -180,7 +214,7 @@ function PhaseItem({ phase }: { phase: Phase }) {
     );
 }
 
-function TaskItem({ task }: { task: Task }) {
+function TaskItem({ task, isReadOnly }: { task: Task, isReadOnly: boolean }) {
     const handleCheck = (checked: boolean) => {
         router.patch(`/tasks/${task.id}`, {
             is_completed: checked
@@ -195,13 +229,15 @@ function TaskItem({ task }: { task: Task }) {
                     checked={task.is_completed}
                     onCheckedChange={(checked) => handleCheck(checked as boolean)}
                     className="mt-1"
+                    disabled={isReadOnly}
                 />
                 <div className="flex-1 grid gap-1.5">
                     <div className="flex items-center justify-between">
                         <Label
                             htmlFor={`task-${task.id}`}
                             className={cn(
-                                "text-base font-medium leading-none cursor-pointer",
+                                "text-base font-medium leading-none",
+                                !isReadOnly && "cursor-pointer",
                                 task.is_completed && "line-through text-muted-foreground"
                             )}
                         >
@@ -216,6 +252,13 @@ function TaskItem({ task }: { task: Task }) {
                         )}
                     </div>
                     <ClickableText text={task.description} className="text-sm text-muted-foreground" />
+                    <NotesSection
+                        initialNotes={task.notes}
+                        isReadOnly={isReadOnly}
+                        onSave={(notes) => {
+                            router.patch(`/tasks/${task.id}`, { notes }, { preserveScroll: true });
+                        }}
+                    />
                 </div>
             </div>
 
@@ -223,21 +266,23 @@ function TaskItem({ task }: { task: Task }) {
                 <CollapsibleContent>
                     <div className="pl-12 pr-4 pb-4 space-y-3 border-t bg-muted/20 pt-3">
                         {task.subtasks.map((subtask) => (
-                            <SubtaskItem key={subtask.id} subtask={subtask} />
+                            <SubtaskItem key={subtask.id} subtask={subtask} isReadOnly={isReadOnly} />
                         ))}
                     </div>
                 </CollapsibleContent>
             )}
-            <CollapsibleContent>
-                <div className="pl-12 pr-4 pb-2 bg-muted/20">
-                    <AddSubtaskForm taskId={task.id} />
-                </div>
-            </CollapsibleContent>
+            {!isReadOnly && (
+                <CollapsibleContent>
+                    <div className="pl-12 pr-4 pb-2 bg-muted/20">
+                        <AddSubtaskForm taskId={task.id} />
+                    </div>
+                </CollapsibleContent>
+            )}
         </Collapsible>
     );
 }
 
-function SubtaskItem({ subtask }: { subtask: Subtask }) {
+function SubtaskItem({ subtask, isReadOnly }: { subtask: Subtask, isReadOnly: boolean }) {
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(subtask.name);
 
@@ -265,11 +310,13 @@ function SubtaskItem({ subtask }: { subtask: Subtask }) {
             <Checkbox
                 id={`subtask-${subtask.id}`}
                 checked={subtask.is_completed}
-                onCheckedChange={(checked) => handleCheck(checked as boolean)}
+                // @ts-ignore
+                onCheckedChange={!isReadOnly ? (checked) => handleCheck(checked as boolean) : undefined}
+                disabled={isReadOnly}
             />
 
             <div className="flex-1">
-                {isEditing ? (
+                {isEditing && !isReadOnly ? (
                     <div className="flex items-center gap-1">
                         <Input
                             value={name}
@@ -299,24 +346,35 @@ function SubtaskItem({ subtask }: { subtask: Subtask }) {
                         <Label
                             htmlFor={`subtask-${subtask.id}`}
                             className={cn(
-                                "text-sm font-normal text-muted-foreground cursor-pointer flex-1",
+                                "text-sm font-normal text-muted-foreground flex-1",
+                                !isReadOnly && "cursor-pointer",
                                 subtask.is_completed && "line-through opacity-70"
                             )}
                         >
                             {subtask.name}
                         </Label>
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
-                        >
-                            <Pencil className="h-3 w-3 text-muted-foreground" />
-                        </button>
+                        {!isReadOnly && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                            >
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                            </button>
+                        )}
                     </div>
                 )}
+                <NotesSection
+                    initialNotes={subtask.notes}
+                    isReadOnly={isReadOnly}
+                    onSave={(notes) => {
+                        router.patch(`/subtasks/${subtask.id}`, { notes }, { preserveScroll: true });
+                    }}
+                />
             </div>
         </div>
     );
 }
+
 
 function AddSubtaskForm({ taskId }: { taskId: number }) {
     const [isAdding, setIsAdding] = useState(false);
@@ -367,6 +425,76 @@ function AddSubtaskForm({ taskId }: { taskId: number }) {
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setIsAdding(false)}>
                 <X className="h-4 w-4" />
             </Button>
+        </div>
+    );
+}
+
+function NotesSection({
+    initialNotes,
+    onSave,
+    isReadOnly
+}: {
+    initialNotes?: string;
+    onSave: (notes: string) => void;
+    isReadOnly: boolean;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [notes, setNotes] = useState(initialNotes || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = () => {
+        setIsSaving(true);
+        onSave(notes);
+        // We simulate a delay or wait for router reload, but router.patch is used in parent.
+        // Assuming parent handles router.patch, we can just unset loading after a timeout or rely on prop update.
+        setTimeout(() => setIsSaving(false), 500);
+    };
+
+    if (!isOpen && !notes) {
+        if (isReadOnly) return null;
+        return (
+            <button
+                onClick={() => setIsOpen(true)}
+                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-2"
+            >
+                <Pencil className="h-3 w-3" />
+                Add Notes
+            </button>
+        );
+    }
+
+    return (
+        <div className="mt-2 text-xs">
+            {!isOpen ? (
+                <div onClick={() => !isReadOnly && setIsOpen(true)} className={cn("p-2 bg-muted/30 rounded-md cursor-pointer hover:bg-muted/50 transition-colors whitespace-pre-wrap", isReadOnly && "cursor-default hover:bg-muted/30")}>
+                    {notes}
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    <Textarea
+                        value={notes}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
+                        className="text-xs min-h-[80px]"
+                        placeholder="Add notes..."
+                        autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                                setNotes(initialNotes || '');
+                                setIsOpen(false);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                            Save
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -57,8 +57,13 @@ class TaskController extends Controller
             abort(403);
         }
 
+        if ($task->phase->project->status !== 'active') {
+            abort(403, 'Project is inactive.');
+        }
+
         $validated = $request->validate([
             'is_completed' => 'boolean',
+            'notes' => 'nullable|string',
         ]);
 
         $task->update($validated);

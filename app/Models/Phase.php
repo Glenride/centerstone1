@@ -11,7 +11,7 @@ class Phase extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['project_id', 'name', 'description', 'status', 'order', 'duration', 'priority'];
+    protected $fillable = ['project_id', 'name', 'description', 'notes', 'status', 'order', 'duration', 'priority'];
 
     public function project(): BelongsTo
     {
