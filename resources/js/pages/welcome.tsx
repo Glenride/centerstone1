@@ -46,13 +46,47 @@ export default function Welcome({
                         </a>
                     </nav>
                     <div>
-                        {/* Fixed: Removed route('login') to avoid ReferenceError if Ziggy is not configured */}
-                        <Link
-                            href="/login"
-                            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        >
-                            Book Session
-                        </Link>
+                        {auth.user ? (
+                            <div className="flex items-center gap-4">
+                                <span className="hidden text-sm font-medium text-muted-foreground md:inline-block">
+                                    {(() => {
+                                        const greetings = [
+                                            "Cheerio!",
+                                            "'Ello governor!",
+                                            "Top hole!",
+                                            "Splendid to see you!",
+                                            "Righto!",
+                                            "Tally-ho!",
+                                            "Wotcha!",
+                                            "How do you do?",
+                                        ];
+                                        // Simple random selection based on user ID or minute to be somewhat stable or just random
+                                        return greetings[Math.floor(Math.random() * greetings.length)];
+                                    })()} {auth.user.name}
+                                </span>
+                                <Link
+                                    href="/dashboard"
+                                    className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                >
+                                    Dashboard
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/login"
+                                    className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                >
+                                    Join Waitlist
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </header>
 
