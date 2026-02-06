@@ -55,15 +55,18 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        // Ensure user owns project
-        if ($project->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('view', $project);
 
-        $project->load('phases.tasks.subtasks');
+        $project->load(['phases.tasks.subtasks', 'user']);
+
+        $activities = \App\Models\ActivityLog::where('project_id', $project->id)
+            ->with(['user', 'subject'])
+            ->latest()
+            ->get();
 
         return Inertia::render('projects/show', [
             'project' => $project,
+            'activities' => $activities,
         ]);
     }
 

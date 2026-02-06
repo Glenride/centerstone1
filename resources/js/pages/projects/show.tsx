@@ -1,12 +1,12 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, Project, Phase, Task, Subtask } from '@/types';
+import type { BreadcrumbItem, Project, Phase, Task, Subtask, Activity } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
-import { ChevronDown, Pencil, Check, X, Plus } from 'lucide-react';
+import { ChevronDown, Pencil, Check, X, Plus, ListHistory } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -20,10 +20,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import ClickableText from '@/components/clickable-text';
 import { cn } from '@/lib/utils';
+import ActivityFeed from '@/components/activity-feed';
 
-export default function ProjectShow({ project }: { project: Project }) {
+export default function ProjectShow({ project, activities = [] }: { project: Project, activities?: Activity[] }) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Dashboard',
@@ -35,32 +38,61 @@ export default function ProjectShow({ project }: { project: Project }) {
         },
     ];
 
+    const isReadOnly = project.status !== 'active';
+
+    const handleStatusChange = (status: string) => {
+        router.patch(`/projects/${project.id}`, { status });
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={project.title} />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
-                <div className="flex items-center justify-between">
+
+            <div className="flex bg-background h-screen flex-1 flex-col gap-4 p-4 pt-0 overflow-hidden">
+                <div className="flex items-start justify-between">
                     <div>
+                        <div className="text-sm text-muted-foreground mb-1">
+                            <Link href="/projects" className="hover:underline">Projects</Link> / {project.title}
+                        </div>
                         <h1 className="text-2xl font-bold tracking-tight">{project.title}</h1>
-                        <p className="text-muted-foreground">{project.description}</p>
+                        <p className="text-muted-foreground mt-1 max-w-2xl">{project.description}</p>
+
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground/80">
+                            <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
+                            <span>Updated: {new Date(project.updated_at || project.created_at).toLocaleDateString()}</span>
+                        </div>
                     </div>
-                    <Select
-                        value={project.status}
-                        onValueChange={(value) => {
-                            router.patch(`/projects/${project.id}`, {
-                                status: value
-                            });
-                        }}
-                    >
-                        <SelectTrigger className="w-[140px] h-8 text-xs">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <ListHistory className="h-4 w-4" />
+                                    Activity
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent className="w-[400px] sm:w-[540px]">
+                                <SheetHeader>
+                                    <SheetTitle>Audit Trail</SheetTitle>
+                                </SheetHeader>
+                                <ScrollArea className="h-[calc(100vh-100px)] pr-4 mt-4">
+                                    <ActivityFeed activities={activities} />
+                                </ScrollArea>
+                            </SheetContent>
+                        </Sheet>
+                        <Select
+                            value={project.status}
+                            onValueChange={handleStatusChange}
+                        >
+                            <SelectTrigger className="w-[140px] h-8 text-xs">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 <div className="grid gap-6">

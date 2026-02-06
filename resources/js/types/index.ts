@@ -41,6 +41,21 @@ export type Subtask = {
     notes?: string;
 };
 
+export type Activity = {
+    id: number;
+    user_id: number;
+    project_id: number;
+    subject_type: string;
+    subject_id: number;
+    description: string;
+    changes?: { before: any; after: any } | null;
+    created_at: string;
+    user: {
+        id: number;
+        name: string;
+    };
+};
+
 export type SharedData = {
     name: string;
     auth: Auth;
