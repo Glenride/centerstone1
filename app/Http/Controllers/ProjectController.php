@@ -14,8 +14,14 @@ class ProjectController extends Controller
      */
     public function index()
     {
+        $query = Project::with('phases');
+
+        if (Auth::user()->role !== 'admin') {
+            $query->where('user_id', Auth::id());
+        }
+
         return Inertia::render('projects/index', [
-            'projects' => Project::where('user_id', Auth::id())->with('phases')->get(),
+            'projects' => $query->get(),
         ]);
     }
 
@@ -83,9 +89,7 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        if ($project->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('update', $project);
 
         $validated = $request->validate([
             'status' => 'sometimes|string|in:active,inactive,completed',

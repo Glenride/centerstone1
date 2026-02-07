@@ -53,9 +53,7 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
-        if ($task->phase->project->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('update', $task->phase->project);
 
         if ($task->phase->project->status !== 'active') {
             abort(403, 'Project is inactive.');

@@ -53,13 +53,7 @@ class PhaseController extends Controller
      */
     public function update(Request $request, Phase $phase)
     {
-        // Add authorization check if needed, e.g., $this->authorize('update', $phase);
-        // Assuming project ownership check is done via middleware or in a Policy, 
-        // but for now relying on ProjectController's initial check or we can add it here.
-        // Simple check:
-        if ($phase->project->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('update', $phase->project);
 
         if ($phase->project->status !== 'active') {
             abort(403, 'Project is inactive.');
