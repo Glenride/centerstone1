@@ -15,7 +15,7 @@ class CreateAdmin extends Command
      *
      * @var string
      */
-    protected $signature = 'make:admin';
+    protected $signature = 'make:admin {--name= : The name of the user} {--email= : The email of the user} {--password= : The password of the user}';
 
     /**
      * The console command description.
@@ -31,24 +31,30 @@ class CreateAdmin extends Command
     {
         $this->info('Creating a new Super Admin user...');
 
-        $name = $this->ask('Name');
-        $email = $this->ask('Email Address');
+        $name = $this->option('name') ?: $this->ask('Name');
+        $email = $this->option('email') ?: $this->ask('Email Address');
         
         while (User::where('email', $email)->exists()) {
             $this->error('User with this email already exists.');
+            if ($this->option('email')) {
+                return;
+            }
             if (!$this->confirm('Do you want to try a different email?')) {
                 return;
             }
             $email = $this->ask('Email Address');
         }
 
-        $password = $this->secret('Password');
-        $confirmPassword = $this->secret('Confirm Password');
-
-        while ($password !== $confirmPassword) {
-            $this->error('Passwords do not match.');
+        $password = $this->option('password');
+        if (!$password) {
             $password = $this->secret('Password');
             $confirmPassword = $this->secret('Confirm Password');
+
+            while ($password !== $confirmPassword) {
+                $this->error('Passwords do not match.');
+                $password = $this->secret('Password');
+                $confirmPassword = $this->secret('Confirm Password');
+            }
         }
 
         $validator = Validator::make([
@@ -76,6 +82,6 @@ class CreateAdmin extends Command
             'role' => 'admin',
         ]);
 
-        $this->info("Super Admin user [{$user->email}] created successfully without 403 errors!");
+        $this->info("Super Admin user [{$user->email}] created successfully!");
     }
 }
